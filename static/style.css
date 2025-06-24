@@ -1,4 +1,4 @@
-/* Flora - Mobile Chatbot Design */
+/* Flora - Advanced AI Botanist Mobile App */
 
 /* Root variables */
 :root {
@@ -6,16 +6,20 @@
     --flora-secondary: #059669;
     --flora-accent: #34d399;
     --flora-green-light: #a7f3d0;
+    --flora-emerald: #50c878;
+    --flora-mint: #98fb98;
     
     /* Dark theme (default) */
-    --bg-primary: #000000;
-    --bg-secondary: #1a1a1a;
-    --bg-tertiary: #2a2a2a;
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #151515;
+    --bg-tertiary: #1f1f1f;
+    --bg-quaternary: #2a2a2a;
     --text-primary: #ffffff;
-    --text-secondary: #b3b3b3;
-    --text-muted: #666666;
-    --border-color: #333333;
-    --shadow: rgba(0, 0, 0, 0.3);
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --border-color: #374151;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --glow: rgba(16, 185, 129, 0.3);
     
     --border-radius: 20px;
     --border-radius-sm: 12px;
@@ -27,7 +31,9 @@
     --spacing-lg: 24px;
     --spacing-xl: 32px;
     
-    --transition: 0.3s ease;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Light theme */

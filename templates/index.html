@@ -18,6 +18,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+    
+    <!-- Floating 3D Elements -->
+    <div class="floating-3d-elements">
+        <div class="leaf-particle leaf-1"></div>
+        <div class="leaf-particle leaf-2"></div>
+        <div class="leaf-particle leaf-3"></div>
+        <div class="pollen-particle pollen-1"></div>
+        <div class="pollen-particle pollen-2"></div>
+    </div>
+
     <div class="mobile-app">
         <!-- Status Bar -->
         <div class="status-bar">
@@ -55,12 +67,22 @@
             <!-- Welcome Message -->
             <div class="chat-message bot-message" id="welcome-message">
                 <div class="message-avatar">
-                    <i class="fas fa-seedling"></i>
+                    <div class="avatar-glow">
+                        <i class="fas fa-seedling"></i>
+                    </div>
                 </div>
                 <div class="message-content">
                     <div class="message-bubble">
-                        <p>Hi! I'm Flora, your AI plant identification assistant. 🌱</p>
-                        <p>Take a photo or upload an image of any plant, and I'll help you identify it!</p>
+                        <div class="typing-animation" id="initial-typing">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <div class="message-text" id="initial-message" style="display: none;">
+                            <p>Hello! I'm Flora, your advanced AI botanist with deep expertise in plant science. 🌿</p>
+                            <p>I can identify plants, answer botanical questions, provide care advice, and discuss plant biology. Ask me anything about plants!</p>
+                            <p><strong>Try saying:</strong> "What's this plant?" or "How do I care for succulents?"</p>
+                        </div>
                     </div>
                     <div class="message-time">Now</div>
                 </div>
@@ -113,15 +135,36 @@
                        style="display: none;">
             </form>
             
-            <div class="input-controls">
-                <button class="camera-trigger-btn" id="camera-trigger-btn">
-                    <i class="fas fa-camera"></i>
-                </button>
-                <button class="gallery-trigger-btn" id="gallery-trigger-btn">
-                    <i class="fas fa-images"></i>
-                </button>
-                <div class="input-text">
-                    <span>Take a photo or choose from gallery</span>
+            <div class="chat-input-container">
+                <div class="input-row">
+                    <button class="attach-btn" id="attach-btn">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <div class="text-input-wrapper">
+                        <input type="text" 
+                               id="text-input" 
+                               placeholder="Ask me about plants..." 
+                               class="text-input"
+                               maxlength="500">
+                        <div class="input-suggestions" id="input-suggestions">
+                            <span class="suggestion" data-text="What's this plant?">What's this plant?</span>
+                            <span class="suggestion" data-text="How do I care for roses?">How do I care for roses?</span>
+                            <span class="suggestion" data-text="Tell me about succulents">Tell me about succulents</span>
+                        </div>
+                    </div>
+                    <button class="send-btn" id="send-btn" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="attach-options" id="attach-options" style="display: none;">
+                    <button class="camera-trigger-btn" id="camera-trigger-btn">
+                        <i class="fas fa-camera"></i>
+                        <span>Camera</span>
+                    </button>
+                    <button class="gallery-trigger-btn" id="gallery-trigger-btn">
+                        <i class="fas fa-images"></i>
+                        <span>Gallery</span>
+                    </button>
                 </div>
             </div>
         </div>
