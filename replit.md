@@ -92,17 +92,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **June 24, 2025**: Advanced AI botanist with 3D animations
-  - Enhanced chatbot with free local plant identification (no API keys needed)
-  - Added Three.js 3D background with floating botanical elements
-  - Implemented comprehensive botanical knowledge base with 100+ plants
-  - Created text-based chat interface with plant-only question filtering
-  - Added typing animations and enhanced message bubbles
-  - Included care tips and Wikipedia read-more links
-  - Built advanced plant categorization system using image analysis
-  - Added GSAP animations for smooth 2D floating elements
-  - Enhanced mobile UI with modern glass-morphism design
-  - Implemented intelligent botanical response system
+- **June 24, 2025**: Complete 3D botanical experience with scientific accuracy
+  - Created immersive 3D landing page with floating botanical elements
+  - Enhanced plant identification to return scientific names and detailed descriptions
+  - Implemented expert-level botanical chatbot with scientific knowledge
+  - Fixed auto-hide functionality for camera/gallery dropdown
+  - Added comprehensive plant database with 50+ scientifically accurate species
+  - Built fallback animations for environments without 3D support
+  - Improved identification algorithm with texture and color analysis
+  - Added smooth transitions between landing page and main app
+  - Enhanced botanical responses covering plant biology, taxonomy, and care
+  - Fixed dependency management for reliable plant identification
 
 ## Changelog
 

@@ -78,10 +78,12 @@ class FloraApp {
 
         // Camera trigger buttons
         safeAddListener(this.cameraTriggerBtn, 'click', () => {
+            this.hideAttachOptions();
             this.openCamera();
         });
         
         safeAddListener(this.galleryTriggerBtn, 'click', () => {
+            this.hideAttachOptions();
             if (this.imageInput) this.imageInput.click();
         });
         
@@ -601,12 +603,27 @@ class FloraApp {
         const isVisible = this.attachOptions.style.display === 'block';
         
         if (isVisible) {
-            this.attachOptions.style.display = 'none';
-            this.attachBtn.classList.remove('active');
+            this.hideAttachOptions();
         } else {
-            this.attachOptions.style.display = 'block';
-            this.attachBtn.classList.add('active');
+            this.showAttachOptions();
         }
+    }
+    
+    showAttachOptions() {
+        if (!this.attachOptions) return;
+        this.attachOptions.style.display = 'block';
+        this.attachBtn.classList.add('active');
+        
+        // Auto-hide after image selection or 5 seconds
+        setTimeout(() => {
+            this.hideAttachOptions();
+        }, 5000);
+    }
+    
+    hideAttachOptions() {
+        if (!this.attachOptions) return;
+        this.attachOptions.style.display = 'none';
+        this.attachBtn.classList.remove('active');
     }
     
     async sendTextMessage() {
@@ -718,11 +735,21 @@ class FloraApp {
     
     // 3D Background initialization
     init3DBackground() {
+        // Wait for Three.js to load if not immediately available
         if (!window.THREE) {
-            console.log('Three.js not loaded, skipping 3D background');
+            setTimeout(() => {
+                if (window.THREE) {
+                    this.setupThreeJSScene();
+                } else {
+                    console.log('Three.js not available, using CSS animations only');
+                }
+            }, 1000);
             return;
         }
-        
+        this.setupThreeJSScene();
+    }
+    
+    setupThreeJSScene() {
         try {
             const canvas = document.getElementById('bg-canvas');
             if (!canvas) {
@@ -748,8 +775,17 @@ class FloraApp {
             window.addEventListener('resize', () => this.onWindowResize());
             
         } catch (error) {
-            console.log('3D background initialization failed:', error);
+            console.log('3D background setup failed, using fallback animations');
+            this.initFallbackAnimations();
         }
+    }
+    
+    onWindowResize() {
+        if (!this.camera || !this.renderer) return;
+        
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     onWindowResize() {
@@ -895,10 +931,10 @@ class FloraApp {
     initAnimations() {
         if (!window.gsap) return;
         
-        // Floating 2D elements animation
+        // Enhanced 2D floating animations
         gsap.to('.leaf-particle', {
-            y: '20px',
-            rotation: '5deg',
+            y: '+=20px',
+            rotation: '+=10deg',
             duration: 4,
             ease: 'power2.inOut',
             stagger: 0.5,
@@ -907,8 +943,8 @@ class FloraApp {
         });
 
         gsap.to('.pollen-particle', {
-            y: '15px',
-            x: '10px',
+            y: '+=15px',
+            x: '+=10px',
             scale: 1.2,
             duration: 3,
             ease: 'power2.inOut',
@@ -916,6 +952,51 @@ class FloraApp {
             repeat: -1,
             yoyo: true
         });
+        
+        // Avatar glow animation
+        gsap.to('.avatar-glow', {
+            boxShadow: '0 0 30px rgba(16, 185, 129, 0.6), 0 0 50px rgba(16, 185, 129, 0.4)',
+            duration: 2,
+            ease: 'power2.inOut',
+            repeat: -1,
+            yoyo: true
+        });
+    }
+    
+    initFallbackAnimations() {
+        // Enhanced CSS-only animations when 3D is not available
+        if (!window.gsap) return;
+        
+        // Create additional floating elements
+        const container = document.querySelector('.floating-3d-elements');
+        if (container) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'css-particle';
+                particle.style.cssText = `
+                    position: absolute;
+                    width: ${4 + Math.random() * 8}px;
+                    height: ${4 + Math.random() * 8}px;
+                    background: radial-gradient(circle, rgba(16, 185, 129, 0.8), rgba(52, 211, 153, 0.4));
+                    border-radius: 50%;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                `;
+                container.appendChild(particle);
+                
+                gsap.to(particle, {
+                    y: '+=30px',
+                    x: '+=20px',
+                    scale: 1.5,
+                    opacity: 0.3,
+                    duration: 6 + Math.random() * 4,
+                    ease: 'power2.inOut',
+                    repeat: -1,
+                    yoyo: true,
+                    delay: Math.random() * 2
+                });
+            }
+        }
     }
     
     // Utility method for showing notifications
