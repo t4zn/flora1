@@ -231,8 +231,21 @@ class FloraLanding {
     initAnimations() {
         if (!window.gsap) return;
 
-        // Hero entrance animation
+        // Hero entrance animation with persistent elements
         const tl = gsap.timeline();
+        
+        // Force visibility and prevent disappearing
+        gsap.set('.floating-elements', { 
+            opacity: 1, 
+            scale: 1, 
+            visibility: 'visible',
+            display: 'block'
+        });
+        gsap.set('.float-leaf, .float-pollen, .float-stem', { 
+            opacity: 1, 
+            visibility: 'visible',
+            display: 'block'
+        });
         
         tl.from('.logo-container', {
             duration: 1.5,
@@ -278,36 +291,48 @@ class FloraLanding {
             ease: 'power2.out'
         }, '-=0.3');
 
-        // Continuous animations
+        // Enhanced persistent animations that maintain visibility
         gsap.to('.float-leaf', {
             y: '+=20',
             rotation: '+=10',
-            duration: 4,
+            duration: 8,
             ease: 'power2.inOut',
-            stagger: 0.5,
+            stagger: 1,
             repeat: -1,
-            yoyo: true
+            yoyo: true,
+            force3D: true,
+            onComplete: function() {
+                gsap.set(this.targets(), { opacity: 1, visibility: 'visible' });
+            }
         });
 
         gsap.to('.float-pollen', {
             y: '+=15',
             x: '+=10',
-            scale: 1.1,
-            duration: 3,
+            scale: 1.2,
+            duration: 6,
             ease: 'power2.inOut',
-            stagger: 0.3,
+            stagger: 0.8,
             repeat: -1,
-            yoyo: true
+            yoyo: true,
+            force3D: true,
+            onComplete: function() {
+                gsap.set(this.targets(), { opacity: 1, visibility: 'visible' });
+            }
         });
 
         gsap.to('.float-stem', {
-            rotation: '+=5',
-            y: '+=10',
-            duration: 5,
+            rotation: '+=8',
+            y: '+=12',
+            duration: 10,
             ease: 'power2.inOut',
-            stagger: 0.4,
+            stagger: 1.2,
             repeat: -1,
-            yoyo: true
+            yoyo: true,
+            force3D: true,
+            onComplete: function() {
+                gsap.set(this.targets(), { opacity: 1, visibility: 'visible' });
+            }
         });
     }
 
@@ -345,21 +370,35 @@ class FloraLanding {
         const particleContainer = document.getElementById('particle-system');
         if (!particleContainer) return;
 
-        // Create floating particles
-        for (let i = 0; i < 50; i++) {
+        // Create persistent floating particles
+        for (let i = 0; i < 30; i++) {
             const particle = document.createElement('div');
+            particle.className = 'floating-particle';
             particle.style.cssText = `
                 position: absolute;
-                width: ${2 + Math.random() * 4}px;
-                height: ${2 + Math.random() * 4}px;
-                background: radial-gradient(circle, rgba(16, 185, 129, 0.8), transparent);
+                width: ${3 + Math.random() * 6}px;
+                height: ${3 + Math.random() * 6}px;
+                background: radial-gradient(circle, rgba(16, 185, 129, 0.9), rgba(52, 211, 153, 0.3));
                 border-radius: 50%;
                 left: ${Math.random() * 100}%;
                 top: ${Math.random() * 100}%;
-                animation: particleFloat ${8 + Math.random() * 8}s ease-in-out infinite;
-                animation-delay: ${Math.random() * 5}s;
+                pointer-events: none;
+                z-index: 1;
             `;
             particleContainer.appendChild(particle);
+            
+            // Animate with GSAP for better control
+            gsap.to(particle, {
+                y: `+=${20 + Math.random() * 40}`,
+                x: `+=${-20 + Math.random() * 40}`,
+                scale: 0.5 + Math.random() * 1.5,
+                opacity: 0.3 + Math.random() * 0.7,
+                duration: 8 + Math.random() * 12,
+                ease: 'power2.inOut',
+                repeat: -1,
+                yoyo: true,
+                delay: Math.random() * 5
+            });
         }
 
         // Add particle animation keyframes
