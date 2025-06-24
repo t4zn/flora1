@@ -1,0 +1,2 @@
+# This file ensures the uploads directory is tracked by git
+# Temporary uploaded images will be stored here and cleaned up automatically

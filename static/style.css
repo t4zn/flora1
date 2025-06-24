@@ -1,0 +1,185 @@
+/* Custom styles for Flora plant identifier */
+
+/* Root variables for consistency */
+:root {
+    --flora-green: #22c55e;
+    --flora-green-hover: #16a34a;
+    --flora-green-light: #dcfce7;
+}
+
+/* Body and layout */
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(22, 163, 74, 0.1) 100%);
+}
+
+/* Header styling */
+header {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Card enhancements */
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Image preview styling */
+#image-preview {
+    border: 2px solid var(--bs-border-color);
+    transition: all 0.3s ease;
+}
+
+#image-preview:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* File input styling */
+.form-control:focus {
+    border-color: var(--flora-green);
+    box-shadow: 0 0 0 0.25rem rgba(34, 197, 94, 0.25);
+}
+
+/* Button styling */
+.btn-success {
+    background-color: var(--flora-green);
+    border-color: var(--flora-green);
+}
+
+.btn-success:hover {
+    background-color: var(--flora-green-hover);
+    border-color: var(--flora-green-hover);
+}
+
+.btn-success:focus {
+    box-shadow: 0 0 0 0.25rem rgba(34, 197, 94, 0.25);
+}
+
+/* Loading animation */
+.spinner-border.text-success {
+    color: var(--flora-green) !important;
+}
+
+/* Results section styling */
+#plant-name {
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+#plant-description {
+    line-height: 1.6;
+    text-align: justify;
+}
+
+/* Badge styling */
+.badge.bg-success {
+    background-color: var(--flora-green) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .card-body {
+        padding: 2rem !important;
+    }
+    
+    .display-4 {
+        font-size: 2.5rem;
+    }
+    
+    #image-preview {
+        max-height: 250px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .btn-lg {
+        font-size: 1rem;
+        padding: 0.75rem 1.5rem;
+    }
+}
+
+/* Smooth transitions */
+.card, .btn, .form-control, .alert {
+    transition: all 0.3s ease;
+}
+
+/* Error styling */
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+/* Footer styling */
+footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Plant icon animation */
+.fa-leaf {
+    animation: gentle-sway 3s ease-in-out infinite;
+}
+
+@keyframes gentle-sway {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(2deg);
+    }
+    75% {
+        transform: rotate(-2deg);
+    }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--flora-green);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--flora-green-hover);
+}
