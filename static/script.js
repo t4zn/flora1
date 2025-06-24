@@ -1,201 +1,426 @@
-// Flora Plant Identifier - Modern Frontend with 3D Effects
+// Flora Plant Identifier - Mobile Chatbot Interface
 
 class FloraApp {
     constructor() {
         this.initializeElements();
         this.attachEventListeners();
-        this.setupFormValidation();
-        this.init3DBackground();
-        this.initAnimations();
+        this.initializeTime();
+        this.initializeTheme();
+        this.setupCamera();
+        this.messageCounter = 0;
     }
 
     initializeElements() {
-        // Form elements
-        this.uploadForm = document.getElementById('upload-form');
-        this.imageInput = document.getElementById('image-input');
-        this.identifyBtn = document.getElementById('identify-btn');
-        this.newScanBtn = document.getElementById('new-scan-btn');
-        this.uploadZone = document.getElementById('upload-zone');
+        // Helper function to safely get elements
+        const safeGetElement = (id) => {
+            const element = document.getElementById(id);
+            if (!element) {
+                console.warn(`Element with id '${id}' not found`);
+            }
+            return element;
+        };
 
-        // Display elements
-        this.imagePreviewContainer = document.getElementById('image-preview-container');
-        this.imagePreview = document.getElementById('image-preview');
-        this.uploadSection = document.getElementById('upload-section');
-        this.loadingState = document.getElementById('loading-state');
-        this.resultsSection = document.getElementById('results-section');
-        this.errorSection = document.getElementById('error-section');
-
-        // Result elements
-        this.plantName = document.getElementById('plant-name');
-        this.confidenceScore = document.getElementById('confidence-score');
-        this.confidenceCircle = document.getElementById('confidence-circle');
-        this.plantDescription = document.getElementById('plant-description');
-        this.errorMessage = document.getElementById('error-message');
-
-        // 3D elements
-        this.bgCanvas = document.getElementById('bg-canvas');
-        this.scene = null;
-        this.camera = null;
-        this.renderer = null;
-        this.particles = [];
+        // Chat elements
+        this.chatContainer = safeGetElement('chat-container');
+        this.welcomeMessage = safeGetElement('welcome-message');
+        
+        // Camera elements
+        this.cameraInterface = safeGetElement('camera-interface');
+        this.cameraVideo = safeGetElement('camera-video');
+        this.cameraCanvas = safeGetElement('camera-canvas');
+        this.focusRing = safeGetElement('focus-ring');
+        
+        // Control buttons
+        this.cameraTriggerBtn = safeGetElement('camera-trigger-btn');
+        this.galleryTriggerBtn = safeGetElement('gallery-trigger-btn');
+        this.cameraCloseBtn = safeGetElement('camera-close');
+        this.cameraDoneBtn = safeGetElement('camera-done');
+        this.captureBtn = safeGetElement('capture-btn');
+        this.galleryBtn = safeGetElement('gallery-btn');
+        this.flashBtn = safeGetElement('flash-btn');
+        
+        // Theme and settings
+        this.themeToggle = safeGetElement('theme-toggle');
+        this.settingsBtn = safeGetElement('settings-btn');
+        this.settingsModal = safeGetElement('settings-modal');
+        this.settingsClose = safeGetElement('settings-close');
+        
+        // Form and loading
+        this.uploadForm = safeGetElement('upload-form');
+        this.imageInput = safeGetElement('image-input');
+        this.loadingOverlay = safeGetElement('loading-overlay');
+        
+        // Status bar
+        this.currentTime = safeGetElement('current-time');
+        
+        // Camera stream
+        this.cameraStream = null;
+        this.flashEnabled = false;
     }
 
     attachEventListeners() {
-        // Image input change event
-        this.imageInput.addEventListener('change', (e) => {
-            this.handleImageSelection(e);
-        });
-
-        // Upload zone click
-        this.uploadZone.addEventListener('click', () => {
-            this.imageInput.click();
-        });
-
-        // Form submission
-        this.uploadForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitImage();
-        });
-
-        // New scan button
-        this.newScanBtn.addEventListener('click', () => {
-            this.resetApp();
-        });
-
-        // Drag and drop functionality
-        this.setupDragAndDrop();
-
-        // Scroll animations
-        this.setupScrollAnimations();
-
-        // Window resize for 3D canvas
-        window.addEventListener('resize', () => {
-            this.onWindowResize();
-        });
-    }
-
-    setupDragAndDrop() {
-        const uploadArea = this.uploadZone;
-
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, this.preventDefaults, false);
-            document.body.addEventListener(eventName, this.preventDefaults, false);
-        });
-
-        // Highlight drop area when item is dragged over it
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.add('dragover');
-            }, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.remove('dragover');
-            }, false);
-        });
-
-        // Handle dropped files
-        uploadArea.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length > 0) {
-                this.imageInput.files = files;
-                this.handleImageSelection({ target: { files: files } });
+        // Helper function to safely add event listeners
+        const safeAddListener = (element, event, handler) => {
+            if (element) {
+                element.addEventListener(event, handler);
             }
-        }, false);
-    }
+        };
 
-    preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    setupFormValidation() {
-        // Real-time validation
-        this.imageInput.addEventListener('change', () => {
-            this.validateForm();
+        // Camera trigger buttons
+        safeAddListener(this.cameraTriggerBtn, 'click', () => {
+            this.openCamera();
+        });
+        
+        safeAddListener(this.galleryTriggerBtn, 'click', () => {
+            if (this.imageInput) this.imageInput.click();
+        });
+        
+        // Camera interface controls
+        safeAddListener(this.cameraCloseBtn, 'click', () => {
+            this.closeCamera();
+        });
+        
+        safeAddListener(this.cameraDoneBtn, 'click', () => {
+            this.closeCamera();
+        });
+        
+        safeAddListener(this.captureBtn, 'click', () => {
+            this.capturePhoto();
+        });
+        
+        safeAddListener(this.galleryBtn, 'click', () => {
+            this.closeCamera();
+            if (this.imageInput) this.imageInput.click();
+        });
+        
+        safeAddListener(this.flashBtn, 'click', () => {
+            this.toggleFlash();
+        });
+        
+        // Theme toggle
+        safeAddListener(this.themeToggle, 'click', () => {
+            this.toggleTheme();
+        });
+        
+        // Settings
+        safeAddListener(this.settingsBtn, 'click', () => {
+            this.openSettings();
+        });
+        
+        safeAddListener(this.settingsClose, 'click', () => {
+            this.closeSettings();
+        });
+        
+        // Theme options in settings
+        document.querySelectorAll('.theme-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.changeTheme(e.target.dataset.theme);
+            });
+        });
+        
+        // File input change
+        safeAddListener(this.imageInput, 'change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                this.handleImageSelection(e.target.files[0]);
+            }
+        });
+        
+        // Camera viewfinder tap to focus
+        safeAddListener(this.cameraVideo, 'click', (e) => {
+            this.focusCamera(e);
+        });
+        
+        // Form submission
+        safeAddListener(this.uploadForm, 'submit', (e) => {
+            e.preventDefault();
         });
     }
 
-    validateForm() {
-        const hasFile = this.imageInput.files && this.imageInput.files.length > 0;
-        this.identifyBtn.disabled = !hasFile;
+    initializeTime() {
+        this.updateTime();
+        setInterval(() => this.updateTime(), 1000);
+    }
+    
+    updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: false 
+        });
+        if (this.currentTime) {
+            this.currentTime.textContent = timeString;
+        }
+    }
+    
+    initializeTheme() {
+        const savedTheme = localStorage.getItem('flora-theme') || 'dark';
+        this.setTheme(savedTheme);
+    }
+    
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        this.setTheme(newTheme);
+    }
+    
+    changeTheme(theme) {
+        this.setTheme(theme);
+        this.closeSettings();
+    }
+    
+    setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('flora-theme', theme);
         
-        if (hasFile) {
-            this.identifyBtn.classList.remove('btn-disabled');
-            this.identifyBtn.classList.add('btn-identify');
+        // Update active theme option
+        document.querySelectorAll('.theme-option').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.theme === theme) {
+                btn.classList.add('active');
+            }
+        });
+    }
+    
+    openSettings() {
+        if (!this.settingsModal) return;
+        this.settingsModal.style.display = 'flex';
+        if (window.gsap) {
+            gsap.fromTo(this.settingsModal, 
+                { opacity: 0 },
+                { opacity: 1, duration: 0.3 }
+            );
+        }
+    }
+    
+    closeSettings() {
+        if (!this.settingsModal) return;
+        if (window.gsap) {
+            gsap.to(this.settingsModal, {
+                opacity: 0,
+                duration: 0.3,
+                onComplete: () => {
+                    this.settingsModal.style.display = 'none';
+                }
+            });
         } else {
-            this.identifyBtn.classList.remove('btn-identify');
-            this.identifyBtn.classList.add('btn-disabled');
+            this.settingsModal.style.display = 'none';
         }
     }
 
-    handleImageSelection(event) {
-        const file = event.target.files[0];
+    setupCamera() {
+        this.cameraSupported = 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices;
         
-        if (!file) {
-            this.hideImagePreview();
+        if (!this.cameraSupported) {
+            console.log('Camera not supported');
+            this.cameraTriggerBtn.style.opacity = '0.5';
+        }
+    }
+    
+    async openCamera() {
+        if (!this.cameraSupported) {
+            this.addBotMessage('Camera is not supported on this device. Please use the gallery option instead.');
             return;
         }
-
-        // Validate file type
-        if (!this.isValidImageType(file)) {
-            this.showError('Please select a valid image file (PNG, JPG, JPEG, GIF, WEBP).');
-            this.imageInput.value = '';
+        
+        try {
+            this.cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }
+            });
+            
+            this.cameraVideo.srcObject = this.cameraStream;
+            this.cameraInterface.style.display = 'flex';
+            
+            // Animate camera interface
+            gsap.fromTo(this.cameraInterface,
+                { opacity: 0, scale: 0.9 },
+                { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }
+            );
+            
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            this.addBotMessage('Unable to access camera. Please check permissions and try again.');
+        }
+    }
+    
+    closeCamera() {
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        
+        gsap.to(this.cameraInterface, {
+            opacity: 0,
+            scale: 0.9,
+            duration: 0.3,
+            onComplete: () => {
+                this.cameraInterface.style.display = 'none';
+            }
+        });
+    }
+    
+    capturePhoto() {
+        if (!this.cameraStream) return;
+        
+        const canvas = this.cameraCanvas;
+        const video = this.cameraVideo;
+        const context = canvas.getContext('2d');
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        context.drawImage(video, 0, 0);
+        
+        // Convert to blob and process
+        canvas.toBlob((blob) => {
+            this.closeCamera();
+            this.handleImageSelection(blob);
+        }, 'image/jpeg', 0.8);
+        
+        // Visual feedback
+        this.focusRing.classList.add('active');
+        setTimeout(() => {
+            this.focusRing.classList.remove('active');
+        }, 1000);
+    }
+    
+    focusCamera(event) {
+        const rect = this.cameraVideo.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        this.focusRing.style.left = `${x - 50}px`;
+        this.focusRing.style.top = `${y - 50}px`;
+        this.focusRing.classList.add('active');
+        
+        setTimeout(() => {
+            this.focusRing.classList.remove('active');
+        }, 1000);
+    }
+    
+    toggleFlash() {
+        this.flashEnabled = !this.flashEnabled;
+        this.flashBtn.style.color = this.flashEnabled ? '#fbbf24' : '';
+        
+        // Flash functionality would require advanced camera API
+        // This is a visual toggle for now
+    }
+    
+    handleImageSelection(file) {
+        if (!file) return;
+        
+        // Validate file type for uploaded files
+        if (file.type && !this.isValidImageType(file)) {
+            this.addBotMessage('Please select a valid image file (PNG, JPG, JPEG, GIF, WEBP).');
             return;
         }
-
+        
         // Validate file size (16MB limit)
         if (file.size > 16 * 1024 * 1024) {
-            this.showError('File size must be less than 16MB.');
-            this.imageInput.value = '';
+            this.addBotMessage('File size must be less than 16MB. Please choose a smaller image.');
             return;
         }
-
-        // Show image preview
-        this.showImagePreview(file);
-        this.hideError();
+        
+        // Add user message with image
+        this.addUserMessage(file);
+        
+        // Process the image
+        this.processImage(file);
     }
-
+    
     isValidImageType(file) {
         const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
         return validTypes.includes(file.type);
     }
 
-    showImagePreview(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            this.imagePreview.src = e.target.result;
-            this.imagePreviewContainer.style.display = 'block';
-            
-            // Animate the preview appearance
-            gsap.fromTo(this.imagePreviewContainer, 
-                { opacity: 0, scale: 0.8, y: 30 },
-                { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" }
-            );
-        };
-        reader.readAsDataURL(file);
+    addUserMessage(file) {
+        if (!this.chatContainer) return;
+        
+        const messageId = `user-msg-${++this.messageCounter}`;
+        const time = new Date().toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit' 
+        });
+        
+        const messageHtml = `
+            <div class="chat-message user-message" id="${messageId}">
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <img src="${URL.createObjectURL(file)}" alt="Plant image" class="plant-image">
+                        <p>Can you identify this plant?</p>
+                    </div>
+                    <div class="message-time">${time}</div>
+                </div>
+                <div class="message-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        `;
+        
+        this.chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+        this.scrollToBottom();
     }
-
-    hideImagePreview() {
-        this.imagePreviewContainer.style.display = 'none';
-        this.imagePreview.src = '';
-    }
-
-    async submitImage() {
-        if (!this.imageInput.files || this.imageInput.files.length === 0) {
-            this.showError('Please select an image first.');
-            return;
+    
+    addBotMessage(text, plantResult = null) {
+        if (!this.chatContainer) return;
+        
+        const messageId = `bot-msg-${++this.messageCounter}`;
+        const time = new Date().toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit' 
+        });
+        
+        let resultHtml = '';
+        if (plantResult) {
+            resultHtml = `
+                <div class="plant-result">
+                    <div class="plant-name">${plantResult.plant}</div>
+                    <div class="plant-confidence">Confidence: ${plantResult.confidence}%</div>
+                    <div class="plant-description">${plantResult.description}</div>
+                </div>
+            `;
         }
-
-        // Show loading state
+        
+        const messageHtml = `
+            <div class="chat-message bot-message" id="${messageId}">
+                <div class="message-avatar">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p>${text}</p>
+                        ${resultHtml}
+                    </div>
+                    <div class="message-time">${time}</div>
+                </div>
+            </div>
+        `;
+        
+        this.chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+        this.scrollToBottom();
+    }
+    
+    scrollToBottom() {
+        if (!this.chatContainer) return;
+        setTimeout(() => {
+            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+        }, 100);
+    }
+    
+    async processImage(file) {
+        // Show loading
         this.showLoading();
+        
+        // Add bot typing message
+        this.addBotMessage('Analyzing your plant image...');
 
         try {
             const formData = new FormData();
-            formData.append('image', this.imageInput.files[0]);
+            formData.append('image', file);
 
             const response = await fetch('/predict', {
                 method: 'POST',
@@ -208,143 +433,73 @@ class FloraApp {
                 throw new Error(data.error || 'Failed to identify plant');
             }
 
+            // Hide loading
+            this.hideLoading();
+            
+            // Remove typing message
+            const lastMessage = this.chatContainer.lastElementChild;
+            if (lastMessage && lastMessage.textContent.includes('Analyzing')) {
+                lastMessage.remove();
+            }
+
             // Show results
-            this.showResults(data);
+            this.addBotMessage('Great! I was able to identify your plant:', data);
 
         } catch (error) {
             console.error('Error:', error);
-            this.showError(error.message || 'An error occurred while identifying the plant. Please try again.');
             this.hideLoading();
+            
+            // Remove typing message
+            const lastMessage = this.chatContainer.lastElementChild;
+            if (lastMessage && lastMessage.textContent.includes('Analyzing')) {
+                lastMessage.remove();
+            }
+            
+            this.addBotMessage('Sorry, I had trouble identifying this plant. Please try another image or make sure the plant is clearly visible.');
         }
     }
 
     showLoading() {
-        // Animate transition to loading state
-        gsap.to(this.uploadSection, {
-            opacity: 0,
-            y: -30,
-            duration: 0.3,
-            onComplete: () => {
-                this.uploadSection.style.display = 'none';
-                this.loadingState.style.display = 'block';
-                gsap.fromTo(this.loadingState,
-                    { opacity: 0, y: 30 },
-                    { opacity: 1, y: 0, duration: 0.5 }
-                );
-            }
-        });
-        
-        this.hideError();
-        this.hideResults();
+        this.loadingOverlay.style.display = 'flex';
+        gsap.fromTo(this.loadingOverlay,
+            { opacity: 0 },
+            { opacity: 1, duration: 0.3 }
+        );
     }
 
     hideLoading() {
-        this.loadingState.style.display = 'none';
-        this.uploadSection.style.display = 'block';
-    }
-
-    showResults(data) {
-        // Update result content
-        this.plantName.textContent = data.plant || 'Unknown Plant';
-        this.confidenceScore.textContent = data.confidence || '0';
-        this.plantDescription.textContent = data.description || 'No description available.';
-
-        // Animate confidence circle
-        const confidence = data.confidence || 0;
-        const circumference = 2 * Math.PI * 25; // radius = 25
-        const offset = circumference - (confidence / 100) * circumference;
-        
-        if (this.confidenceCircle) {
-            this.confidenceCircle.style.strokeDashoffset = offset;
-        }
-
-        // Hide loading and show results with animation
-        gsap.to(this.loadingState, {
+        gsap.to(this.loadingOverlay, {
             opacity: 0,
-            y: -30,
             duration: 0.3,
             onComplete: () => {
-                this.loadingState.style.display = 'none';
-                this.resultsSection.style.display = 'block';
-                
-                // Animate results appearance
-                gsap.timeline()
-                    .fromTo(this.resultsSection,
-                        { opacity: 0, y: 50, scale: 0.9 },
-                        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.7)" }
-                    )
-                    .fromTo(this.plantName,
-                        { opacity: 0, x: -30 },
-                        { opacity: 1, x: 0, duration: 0.4 }, "-=0.3"
-                    )
-                    .fromTo(this.plantDescription,
-                        { opacity: 0, y: 20 },
-                        { opacity: 1, y: 0, duration: 0.4 }, "-=0.2"
-                    );
+                this.loadingOverlay.style.display = 'none';
             }
         });
-
-        // Scroll to results smoothly
-        setTimeout(() => {
-            this.resultsSection.scrollIntoView({ behavior: 'smooth' });
-        }, 300);
     }
 
-    hideResults() {
-        this.resultsSection.style.display = 'none';
-    }
-
-    showError(message) {
-        this.errorMessage.textContent = message;
-        this.errorSection.style.display = 'block';
-        
-        // Animate error appearance
-        gsap.fromTo(this.errorSection,
-            { opacity: 0, scale: 0.9, y: 30 },
-            { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" }
+    // Helper methods for transitions and animations
+    fadeIn(element, duration = 0.3) {
+        gsap.fromTo(element,
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: duration }
         );
-        
-        // Auto-hide error after 5 seconds
-        setTimeout(() => {
-            this.hideError();
-        }, 5000);
     }
-
-    hideError() {
-        this.errorSection.style.display = 'none';
-    }
-
-    resetApp() {
-        // Reset form
-        this.uploadForm.reset();
-        this.imageInput.value = '';
-        
-        // Animate reset
-        const timeline = gsap.timeline();
-        
-        timeline
-            .to([this.resultsSection, this.errorSection, this.loadingState], {
+    
+    fadeOut(element, duration = 0.3) {
+        return new Promise(resolve => {
+            gsap.to(element, {
                 opacity: 0,
-                y: 30,
-                duration: 0.3,
-                onComplete: () => {
-                    this.hideResults();
-                    this.hideError();
-                    this.hideLoading();
-                    this.hideImagePreview();
-                }
-            })
-            .set(this.uploadSection, { display: 'block' })
-            .fromTo(this.uploadSection,
-                { opacity: 0, y: -30 },
-                { opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" }
-            );
-        
-        // Reset button state
-        this.validateForm();
-        
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+                y: -20,
+                duration: duration,
+                onComplete: resolve
+            });
+        });
+    }
+    
+    // Utility method for showing notifications
+    showNotification(message, type = 'info') {
+        // This could be expanded to show toast notifications
+        console.log(`${type}: ${message}`);
     }
 
     // 3D Background initialization
@@ -533,61 +688,53 @@ class FloraApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.floraApp = new FloraApp();
     
-    // Add smooth page load animation
-    gsap.fromTo('body', 
-        { opacity: 0 },
-        { opacity: 1, duration: 1, ease: 'power2.out' }
+    // Smooth page load animation
+    gsap.fromTo('.mobile-app', 
+        { opacity: 0, scale: 0.95 },
+        { opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' }
     );
     
-    // Staggered animation for hero content
-    gsap.timeline()
-        .fromTo('.logo-3d', 
-            { scale: 0, rotation: 180 },
-            { scale: 1, rotation: 0, duration: 1, ease: 'back.out(1.7)' }
-        )
-        .fromTo('.hero-title',
-            { y: 50, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.5'
-        )
-        .fromTo('.hero-subtitle',
-            { y: 30, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' }, '-=0.3'
+    // Animate welcome message
+    setTimeout(() => {
+        gsap.fromTo('#welcome-message',
+            { opacity: 0, y: 30 },
+            { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.7)' }
         );
+    }, 300);
     
-    // Add keyboard shortcuts
+    // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + U to upload new image
-        if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
-            e.preventDefault();
-            window.floraApp.resetApp();
-            window.floraApp.imageInput.click();
-        }
-        
-        // Escape to reset app
+        // Escape to close camera or settings
         if (e.key === 'Escape') {
-            window.floraApp.resetApp();
+            if (window.floraApp.cameraInterface.style.display === 'flex') {
+                window.floraApp.closeCamera();
+            }
+            if (window.floraApp.settingsModal.style.display === 'flex') {
+                window.floraApp.closeSettings();
+            }
         }
         
-        // Space to scroll to upload section
-        if (e.key === ' ' && e.target === document.body) {
+        // Space or Enter to open camera
+        if ((e.key === ' ' || e.key === 'Enter') && e.target === document.body) {
             e.preventDefault();
-            document.querySelector('#upload-section').scrollIntoView({ behavior: 'smooth' });
+            window.floraApp.openCamera();
         }
     });
     
-    // Add touch gesture support for mobile
-    let touchStartY = 0;
-    document.addEventListener('touchstart', (e) => {
-        touchStartY = e.touches[0].clientY;
-    });
-    
+    // Prevent zoom on double tap
+    let lastTouchEnd = 0;
     document.addEventListener('touchend', (e) => {
-        const touchEndY = e.changedTouches[0].clientY;
-        const diff = touchStartY - touchEndY;
-        
-        // Swipe up to go to upload section
-        if (diff > 50 && window.scrollY < 100) {
-            document.querySelector('#upload-section').scrollIntoView({ behavior: 'smooth' });
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+    
+    // Handle back button for camera
+    window.addEventListener('popstate', () => {
+        if (window.floraApp.cameraInterface.style.display === 'flex') {
+            window.floraApp.closeCamera();
         }
     });
 });
@@ -596,19 +743,39 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('error', (e) => {
     console.error('Global error:', e.error);
     if (window.floraApp) {
-        window.floraApp.showError('An unexpected error occurred. Please refresh the page and try again.');
+        window.floraApp.addBotMessage('Sorry, something went wrong. Please try again.');
     }
 });
 
 // Handle online/offline status
 window.addEventListener('online', () => {
     if (window.floraApp) {
-        window.floraApp.showToast('Connection restored', 'success');
+        window.floraApp.showNotification('Connection restored', 'success');
     }
 });
 
 window.addEventListener('offline', () => {
     if (window.floraApp) {
-        window.floraApp.showToast('You are offline. Some features may not work.', 'warning');
+        window.floraApp.addBotMessage('You appear to be offline. Please check your connection.');
+    }
+});
+
+// Prevent zoom on inputs
+document.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+});
+
+// Add visual feedback for touch interactions
+document.addEventListener('touchstart', (e) => {
+    const target = e.target.closest('button');
+    if (target) {
+        target.style.transform = 'scale(0.95)';
+    }
+});
+
+document.addEventListener('touchend', (e) => {
+    const target = e.target.closest('button');
+    if (target) {
+        target.style.transform = '';
     }
 });

@@ -92,15 +92,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **June 24, 2025**: Enhanced UI with modern mobile-first design
-  - Added 3D background effects using Three.js
-  - Implemented GSAP animations for smooth interactions
-  - Created glass-morphism cards with backdrop blur effects
-  - Added DNA helix loading animation
-  - Implemented animated confidence circle display
-  - Enhanced drag-and-drop with visual feedback
-  - Added touch gesture support for mobile devices
-  - Improved responsive design for all screen sizes
+- **June 24, 2025**: Complete mobile chatbot transformation
+  - Redesigned as mobile-first chatbot interface with fixed aspect ratio
+  - Added iPhone-style status bar with live time display
+  - Implemented camera interface matching user's reference design
+  - Added live camera preview with tap-to-focus functionality
+  - Created chat-based conversation flow for plant identification
+  - Added light/dark theme toggle with system preference detection
+  - Implemented settings modal with theme switching
+  - Added proper mobile camera capture and gallery selection
+  - Enhanced touch interactions and gesture support
+  - Removed scrolling - fits perfectly in mobile viewport
 
 ## Changelog
 

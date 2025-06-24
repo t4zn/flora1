@@ -2,11 +2,8 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Flora - Plant Identifier</title>
-    
-    <!-- Bootstrap CSS with Replit theme -->
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,198 +18,158 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <!-- 3D Background Canvas -->
-    <canvas id="bg-canvas"></canvas>
-    
-    <!-- Floating particles -->
-    <div class="floating-particles">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-    </div>
-    
-    <div class="container-fluid">
-        <!-- Header -->
-        <header class="hero-section text-center py-5">
-            <div class="container">
-                <div class="hero-content">
-                    <div class="logo-container mb-4">
-                        <div class="logo-3d">
-                            <i class="fas fa-leaf text-success"></i>
-                        </div>
+    <div class="mobile-app">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="time" id="current-time">10:41</span>
+            </div>
+            <div class="status-right">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <span class="battery">71%</span>
+                <i class="fas fa-battery-three-quarters"></i>
+            </div>
+        </div>
+
+        <!-- Header with Theme Toggle -->
+        <div class="app-header">
+            <div class="header-left">
+                <button class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-sun theme-icon-light"></i>
+                    <i class="fas fa-moon theme-icon-dark"></i>
+                </button>
+            </div>
+            <div class="header-center">
+                <h1 class="app-title">Flora</h1>
+            </div>
+            <div class="header-right">
+                <button class="settings-btn" id="settings-btn">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chat-container">
+            <!-- Welcome Message -->
+            <div class="chat-message bot-message" id="welcome-message">
+                <div class="message-avatar">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p>Hi! I'm Flora, your AI plant identification assistant. 🌱</p>
+                        <p>Take a photo or upload an image of any plant, and I'll help you identify it!</p>
                     </div>
-                    <h1 class="hero-title display-3 mb-3">Flora</h1>
-                    <p class="hero-subtitle lead mb-4">Discover the world of plants with AI-powered identification</p>
-                    <div class="scroll-indicator">
-                        <i class="fas fa-chevron-down"></i>
+                    <div class="message-time">Now</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera Interface -->
+        <div class="camera-interface" id="camera-interface" style="display: none;">
+            <div class="camera-header">
+                <button class="camera-close" id="camera-close">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="camera-title">Identify Plants Around You</h2>
+                <button class="camera-done" id="camera-done">Done</button>
+            </div>
+            
+            <div class="camera-viewfinder">
+                <video id="camera-video" autoplay playsinline></video>
+                <canvas id="camera-canvas" style="display: none;"></canvas>
+                
+                <div class="camera-overlay">
+                    <div class="focus-ring" id="focus-ring"></div>
+                    <div class="scan-lines"></div>
+                </div>
+            </div>
+            
+            <div class="camera-controls">
+                <button class="gallery-btn" id="gallery-btn">
+                    <i class="fas fa-images"></i>
+                </button>
+                <button class="capture-btn" id="capture-btn">
+                    <div class="capture-ring">
+                        <div class="capture-inner"></div>
+                    </div>
+                </button>
+                <button class="flash-btn" id="flash-btn">
+                    <i class="fas fa-bolt"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Input Controls -->
+        <div class="input-area">
+            <form id="upload-form" enctype="multipart/form-data">
+                <input type="file" 
+                       id="image-input" 
+                       name="image" 
+                       accept="image/*" 
+                       capture="environment"
+                       style="display: none;">
+            </form>
+            
+            <div class="input-controls">
+                <button class="camera-trigger-btn" id="camera-trigger-btn">
+                    <i class="fas fa-camera"></i>
+                </button>
+                <button class="gallery-trigger-btn" id="gallery-trigger-btn">
+                    <i class="fas fa-images"></i>
+                </button>
+                <div class="input-text">
+                    <span>Take a photo or choose from gallery</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="dna-spinner">
+                    <div class="dna-helix">
+                        <div class="strand strand-1"></div>
+                        <div class="strand strand-2"></div>
+                    </div>
+                </div>
+                <h3 class="loading-title">Analyzing Plant</h3>
+                <p class="loading-subtitle">AI is examining botanical features...</p>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
                     </div>
                 </div>
             </div>
-        </header>
+        </div>
 
-        <!-- Main Content -->
-        <main class="container">
-            <!-- Upload Section -->
-            <div id="upload-section" class="row justify-content-center">
-                <div class="col-lg-8 col-xl-6">
-                    <div class="glass-card upload-card">
-                        <div class="card-body p-4">
-                            <!-- Image Preview Area -->
-                            <div id="image-preview-container" class="preview-container text-center mb-4" style="display: none;">
-                                <div class="image-frame">
-                                    <img id="image-preview" class="preview-image" alt="Plant preview">
-                                    <div class="image-overlay">
-                                        <div class="scanning-line"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Upload Form -->
-                            <form id="upload-form" enctype="multipart/form-data">
-                                <div class="upload-zone mb-4" id="upload-zone">
-                                    <div class="upload-content">
-                                        <div class="upload-icon">
-                                            <i class="fas fa-camera"></i>
-                                        </div>
-                                        <h4 class="upload-title">Upload Plant Image</h4>
-                                        <p class="upload-subtitle">Drag & drop or click to select</p>
-                                        <input type="file" 
-                                               class="form-control visually-hidden" 
-                                               id="image-input" 
-                                               name="image" 
-                                               accept="image/*" 
-                                               capture="environment">
-                                        <div class="upload-formats">
-                                            <small class="text-muted">PNG, JPG, JPEG, GIF, WEBP (max 16MB)</small>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="d-grid gap-2">
-                                    <button type="submit" 
-                                            id="identify-btn" 
-                                            class="btn-modern btn-identify" 
-                                            disabled>
-                                        <span class="btn-text">
-                                            <i class="fas fa-magic me-2"></i>
-                                            Identify Plant
-                                        </span>
-                                        <div class="btn-ripple"></div>
-                                    </button>
-                                </div>
-                            </form>
-
-                            <!-- Loading State -->
-                            <div id="loading-state" class="loading-container text-center py-4" style="display: none;">
-                                <div class="dna-spinner">
-                                    <div class="dna-helix">
-                                        <div class="strand strand-1"></div>
-                                        <div class="strand strand-2"></div>
-                                    </div>
-                                </div>
-                                <h4 class="loading-title mt-4">Analyzing Plant</h4>
-                                <p class="loading-subtitle">Our AI is examining the botanical features...</p>
-                                <div class="progress-container">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Settings Modal -->
+        <div class="settings-modal" id="settings-modal" style="display: none;">
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h3>Settings</h3>
+                    <button class="settings-close" id="settings-close">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-            </div>
-
-            <!-- Results Section -->
-            <div id="results-section" class="row justify-content-center mt-4" style="display: none;">
-                <div class="col-lg-8 col-xl-6">
-                    <div class="glass-card results-card">
-                        <div class="card-body p-4">
-                            <div class="results-header mb-4">
-                                <div class="result-icon">
-                                    <i class="fas fa-seedling"></i>
-                                </div>
-                                <h3 class="results-title">Plant Identified!</h3>
-                                <button id="new-scan-btn" class="btn-float">
-                                    <i class="fas fa-camera"></i>
-                                </button>
-                            </div>
-
-                            <!-- Plant Name and Confidence -->
-                            <div class="plant-info mb-4">
-                                <h2 id="plant-name" class="plant-name-title"></h2>
-                                <div class="confidence-display">
-                                    <div class="confidence-circle">
-                                        <svg class="confidence-svg" width="60" height="60">
-                                            <circle class="confidence-bg" cx="30" cy="30" r="25"></circle>
-                                            <circle class="confidence-fill" cx="30" cy="30" r="25" id="confidence-circle"></circle>
-                                        </svg>
-                                        <div class="confidence-text">
-                                            <span id="confidence-score">0</span>%
-                                        </div>
-                                    </div>
-                                    <span class="confidence-label">Confidence</span>
-                                </div>
-                            </div>
-
-                            <!-- Plant Description -->
-                            <div class="description-section">
-                                <div class="section-header">
-                                    <h5 class="section-title">
-                                        <i class="fas fa-book-open me-2"></i>
-                                        About This Plant
-                                    </h5>
-                                </div>
-                                <div class="description-content">
-                                    <p id="plant-description" class="description-text"></p>
-                                </div>
-                            </div>
-
-                            <!-- Source Attribution -->
-                            <div class="source-attribution">
-                                <i class="fab fa-wikipedia-w me-2"></i>
-                                <span>Information from Wikipedia</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Error Section -->
-            <div id="error-section" class="row justify-content-center mt-4" style="display: none;">
-                <div class="col-lg-8 col-xl-6">
-                    <div class="error-card glass-card">
-                        <div class="error-content">
-                            <div class="error-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <h4 class="error-title">Oops! Something went wrong</h4>
-                            <p class="error-message" id="error-message"></p>
-                            <button class="btn-modern btn-retry" onclick="window.floraApp.resetApp()">
-                                <i class="fas fa-redo me-2"></i>
-                                Try Again
+                <div class="settings-body">
+                    <div class="setting-item">
+                        <label>Theme</label>
+                        <div class="theme-options">
+                            <button class="theme-option" data-theme="light">
+                                <i class="fas fa-sun"></i> Light
+                            </button>
+                            <button class="theme-option active" data-theme="dark">
+                                <i class="fas fa-moon"></i> Dark
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="text-center py-4 mt-5">
-            <div class="container">
-                <p class="text-muted small mb-0">
-                    <i class="fas fa-leaf me-1"></i>
-                    Flora - AI-powered plant identification
-                </p>
-            </div>
-        </footer>
+        </div>
     </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
