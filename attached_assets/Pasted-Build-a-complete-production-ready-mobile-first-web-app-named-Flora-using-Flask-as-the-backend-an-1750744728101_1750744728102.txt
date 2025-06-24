@@ -1,0 +1,133 @@
+Build a complete, production-ready mobile-first web app named "Flora", using Flask as the backend and a modern mobile-optimized frontend.
+
+The app should function as a plant identifier — users upload or capture an image of a plant (leaf, flower, bark, etc.), and the app returns the plant name and a short description of it.
+
+📱 APP FUNCTIONALITY (NO LOGIN OR SIGNUP)
+This app must not contain login, signup, user accounts, or any authentication features.
+It is a single-use utility app where the user:
+
+Opens the app
+
+Uploads or captures a photo of a plant
+
+Receives plant identification results
+
+No navigation menus, profile pages, or user history — just a clean scan-and-result flow.
+
+🧩 APP LOGIC FLOW (DETAILED)
+➤ Step 1: Open App
+User lands directly on the main screen
+
+Presented with a camera upload option
+
+Either capture an image from camera or choose from gallery
+
+➤ Step 2: Upload Image
+Upon selecting the image, user taps a button to identify plant
+
+The image is sent via fetch as FormData to a Flask backend route (/predict)
+
+➤ Step 3: Backend Processing
+Flask receives the image and passes it to an accurate plant identification model or API (you can choose any free or open-source model or service)
+
+The backend then extracts the plant name and optionally other metadata
+
+It uses the Wikipedia REST API to fetch a brief description of the plant
+
+The Flask API returns JSON with:
+
+json
+Copy
+Edit
+{
+  "plant": "Ficus lyrata",
+  "description": "Ficus lyrata, commonly known as the fiddle-leaf fig, is a species of flowering plant in the mulberry and fig family..."
+}
+➤ Step 4: Show Results on Frontend
+Frontend receives this JSON
+
+It updates the UI to show:
+
+The uploaded plant image
+
+The predicted plant name
+
+The description from Wikipedia
+
+⚙️ BACKEND REQUIREMENTS
+Must be built in Flask
+
+Include route /predict that accepts image uploads (POST)
+
+Use a free, high-accuracy plant identification model or API
+
+You may use a Hugging Face ViT model or another open API — just ensure it's accessible and works with image input
+
+Connect to Wikipedia REST API using the plant name to fetch its summary
+
+Return plant name and description as JSON
+
+Ensure uploaded images are temporarily saved and cleaned up
+
+Backend must be connected to the frontend without any error
+
+🌐 FRONTEND REQUIREMENTS
+Fully mobile-first, but also responsive to desktop
+
+HTML, CSS, and JS (no frameworks unless needed)
+
+Must include:
+
+Image upload or camera capture interface
+
+Identify button
+
+Result display with:
+
+Image preview
+
+Plant name
+
+Description
+
+JavaScript should handle:
+
+Image upload
+
+Fetching response from /predict
+
+DOM updates with results
+
+Include clean state handling:
+
+Loading indicator while waiting
+
+Error display for failed uploads
+
+🎯 KEY RULES
+Do not add login, auth, or user system
+
+Must be deployable directly to Render, Railway, Replit, or Hugging Face Spaces
+
+Use Flask's templating system (Jinja) for HTML rendering
+
+Include all imports, paths, folder structure, and working endpoints
+
+Ensure no broken connections between frontend and backend (image must upload and response must be usable)
+
+Add minimal loading transitions or animations where helpful (AI may decide where)
+
+📁 FILE STRUCTURE TO FOLLOW
+csharp
+Copy
+Edit
+Flora/
+├── app.py                  # Flask backend
+├── requirements.txt        # Dependency list
+├── templates/
+│   └── index.html          # Main UI
+├── static/
+│   ├── style.css           # All styling
+│   └── script.js           # JS logic
+└── uploads/                # Temporary image storage
+⚠️ Final note: You (the AI) must generate a working project with properly connected image upload, backend prediction, and frontend rendering — no placeholder logic, no missing pieces, and no errors when uploading an image.
