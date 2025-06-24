@@ -247,6 +247,15 @@ class FloraLanding {
             display: 'block'
         });
         
+        // Ensure start button remains visible and clickable
+        gsap.set('.start-btn', {
+            opacity: 1,
+            visibility: 'visible',
+            display: 'inline-flex',
+            pointerEvents: 'auto',
+            zIndex: 1000
+        });
+        
         tl.from('.logo-container', {
             duration: 1.5,
             scale: 0,
@@ -281,7 +290,17 @@ class FloraLanding {
         .from('.start-btn', {
             duration: 0.8,
             scale: 0,
-            ease: 'back.out(1.7)'
+            ease: 'back.out(1.7)',
+            onComplete: function() {
+                // Ensure button stays visible after animation
+                gsap.set('.start-btn', {
+                    opacity: 1,
+                    visibility: 'visible',
+                    display: 'inline-flex',
+                    pointerEvents: 'auto',
+                    zIndex: 1000
+                });
+            }
         }, '-=0.2')
         .from('.features-section .feature-card', {
             duration: 0.6,
@@ -340,8 +359,37 @@ class FloraLanding {
         const startBtn = document.getElementById('start-btn');
         
         if (startBtn) {
-            startBtn.addEventListener('click', () => {
+            // Ensure button is always visible and clickable
+            gsap.set(startBtn, {
+                opacity: 1,
+                visibility: 'visible',
+                display: 'inline-flex',
+                pointerEvents: 'auto',
+                zIndex: 1000
+            });
+            
+            startBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Start button clicked!');
                 this.transitionToApp();
+            });
+            
+            // Add hover effects that maintain visibility
+            startBtn.addEventListener('mouseenter', () => {
+                gsap.to(startBtn, {
+                    scale: 1.05,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+            });
+            
+            startBtn.addEventListener('mouseleave', () => {
+                gsap.to(startBtn, {
+                    scale: 1,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
             });
         }
 
@@ -427,47 +475,44 @@ class FloraLanding {
     }
 
     transitionToApp() {
-        // Enhanced transition animation
-        const tl = gsap.timeline();
+        console.log('Transitioning to app...');
         
-        tl.to('.floating-elements', {
-            scale: 1.2,
-            opacity: 0.3,
-            duration: 0.4,
-            ease: 'power2.out'
-        })
-        .to('.logo-3d', {
-            scale: 1.5,
-            rotation: 180,
-            duration: 0.6,
-            ease: 'back.in(1.7)'
-        }, 0)
-        .to('.hero-title, .hero-description, .feature-highlights', {
-            y: -50,
-            opacity: 0,
-            duration: 0.5,
-            stagger: 0.1,
-            ease: 'power2.in'
-        }, 0.2)
-        .to('.features-section', {
-            y: 50,
-            opacity: 0,
-            duration: 0.4,
-            ease: 'power2.in'
-        }, 0.3)
-        .to('.landing-container', {
-            scale: 0.8,
-            opacity: 0,
-            duration: 0.4,
-            ease: 'power2.in',
-            onComplete: () => {
-                window.location.href = '/app';
+        // Simple immediate navigation - no fancy animations to avoid issues
+        window.location.href = '/app';
+        
+        // Fallback in case location change fails
+        setTimeout(() => {
+            if (window.location.pathname === '/') {
+                console.log('Fallback navigation');
+                window.open('/app', '_self');
             }
-        }, 0.6);
+        }, 1000);
     }
 }
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new FloraLanding();
+    
+    // Fallback button fix - ensure it's always visible
+    setTimeout(() => {
+        const startBtn = document.getElementById('start-btn');
+        if (startBtn) {
+            startBtn.style.cssText += `
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: inline-flex !important;
+                pointer-events: auto !important;
+                z-index: 9999 !important;
+                position: relative !important;
+            `;
+            
+            // Add click handler as backup
+            startBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log('Button clicked - navigating to app');
+                window.location.href = '/app';
+            };
+        }
+    }, 100);
 });

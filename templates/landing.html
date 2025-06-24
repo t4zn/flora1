@@ -79,11 +79,29 @@
                     </div>
                 </div>
                 
-                <button class="start-btn" id="start-btn">
+                <button class="start-btn" id="start-btn" onclick="window.location.href='/app'">
                     <span class="btn-text">Start Exploring</span>
                     <i class="fas fa-arrow-right btn-icon"></i>
                     <div class="btn-glow"></div>
                 </button>
+                
+                <!-- Backup button in case of animation issues -->
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="/app" style="
+                        display: inline-block;
+                        padding: 1rem 2rem;
+                        background: linear-gradient(135deg, #10b981, #059669);
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 50px;
+                        font-weight: 700;
+                        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+                        z-index: 10000;
+                        position: relative;
+                    " id="backup-btn">
+                        Enter Flora App →
+                    </a>
+                </div>
             </div>
         </div>
         

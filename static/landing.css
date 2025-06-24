@@ -180,6 +180,7 @@ html, body {
     max-width: 600px;
     padding: 2rem;
     position: relative;
+    z-index: 10;
 }
 
 .logo-container {
@@ -316,29 +317,33 @@ html, body {
     color: var(--text-primary);
 }
 
-/* Start Button */
+/* Start Button - Force visibility */
 .start-btn {
-    position: relative;
-    padding: 1rem 3rem;
-    font-size: 1.2rem;
-    font-weight: 700;
-    background: var(--gradient-primary);
-    color: white;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin: 2rem auto;
-    overflow: hidden;
-    box-shadow: var(--shadow-glow);
-    animation: buttonPulse 4s ease-in-out infinite;
-    z-index: 10;
-    text-decoration: none;
-    min-width: 200px;
+    position: relative !important;
+    padding: 1rem 3rem !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50px !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+    margin: 2rem auto !important;
+    overflow: hidden !important;
+    box-shadow: var(--shadow-glow) !important;
+    animation: buttonPulse 4s ease-in-out infinite !important;
+    z-index: 9999 !important;
+    text-decoration: none !important;
+    min-width: 200px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
 }
 
 .start-btn::before {
@@ -377,8 +382,16 @@ html, body {
 }
 
 @keyframes buttonPulse {
-    0%, 100% { box-shadow: var(--shadow-glow); }
-    50% { box-shadow: var(--shadow-intense); }
+    0%, 100% { 
+        box-shadow: var(--shadow-glow); 
+        opacity: 1;
+        visibility: visible;
+    }
+    50% { 
+        box-shadow: var(--shadow-intense); 
+        opacity: 1;
+        visibility: visible;
+    }
 }
 
 /* Features Section */
