@@ -1,10 +1,12 @@
-// Flora Plant Identifier - Frontend JavaScript
+// Flora Plant Identifier - Modern Frontend with 3D Effects
 
 class FloraApp {
     constructor() {
         this.initializeElements();
         this.attachEventListeners();
         this.setupFormValidation();
+        this.init3DBackground();
+        this.initAnimations();
     }
 
     initializeElements() {
@@ -13,6 +15,7 @@ class FloraApp {
         this.imageInput = document.getElementById('image-input');
         this.identifyBtn = document.getElementById('identify-btn');
         this.newScanBtn = document.getElementById('new-scan-btn');
+        this.uploadZone = document.getElementById('upload-zone');
 
         // Display elements
         this.imagePreviewContainer = document.getElementById('image-preview-container');
@@ -25,14 +28,27 @@ class FloraApp {
         // Result elements
         this.plantName = document.getElementById('plant-name');
         this.confidenceScore = document.getElementById('confidence-score');
+        this.confidenceCircle = document.getElementById('confidence-circle');
         this.plantDescription = document.getElementById('plant-description');
         this.errorMessage = document.getElementById('error-message');
+
+        // 3D elements
+        this.bgCanvas = document.getElementById('bg-canvas');
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.particles = [];
     }
 
     attachEventListeners() {
         // Image input change event
         this.imageInput.addEventListener('change', (e) => {
             this.handleImageSelection(e);
+        });
+
+        // Upload zone click
+        this.uploadZone.addEventListener('click', () => {
+            this.imageInput.click();
         });
 
         // Form submission
@@ -48,10 +64,18 @@ class FloraApp {
 
         // Drag and drop functionality
         this.setupDragAndDrop();
+
+        // Scroll animations
+        this.setupScrollAnimations();
+
+        // Window resize for 3D canvas
+        window.addEventListener('resize', () => {
+            this.onWindowResize();
+        });
     }
 
     setupDragAndDrop() {
-        const uploadArea = this.uploadForm;
+        const uploadArea = this.uploadZone;
 
         // Prevent default drag behaviors
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -62,13 +86,13 @@ class FloraApp {
         // Highlight drop area when item is dragged over it
         ['dragenter', 'dragover'].forEach(eventName => {
             uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.add('border-success');
+                uploadArea.classList.add('dragover');
             }, false);
         });
 
         ['dragleave', 'drop'].forEach(eventName => {
             uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.remove('border-success');
+                uploadArea.classList.remove('dragover');
             }, false);
         });
 
@@ -100,11 +124,11 @@ class FloraApp {
         this.identifyBtn.disabled = !hasFile;
         
         if (hasFile) {
-            this.identifyBtn.classList.remove('btn-secondary');
-            this.identifyBtn.classList.add('btn-success');
+            this.identifyBtn.classList.remove('btn-disabled');
+            this.identifyBtn.classList.add('btn-identify');
         } else {
-            this.identifyBtn.classList.remove('btn-success');
-            this.identifyBtn.classList.add('btn-secondary');
+            this.identifyBtn.classList.remove('btn-identify');
+            this.identifyBtn.classList.add('btn-disabled');
         }
     }
 
@@ -145,7 +169,12 @@ class FloraApp {
         reader.onload = (e) => {
             this.imagePreview.src = e.target.result;
             this.imagePreviewContainer.style.display = 'block';
-            this.imagePreviewContainer.classList.add('fade-in');
+            
+            // Animate the preview appearance
+            gsap.fromTo(this.imagePreviewContainer, 
+                { opacity: 0, scale: 0.8, y: 30 },
+                { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" }
+            );
         };
         reader.readAsDataURL(file);
     }
@@ -190,8 +219,21 @@ class FloraApp {
     }
 
     showLoading() {
-        this.uploadSection.style.display = 'none';
-        this.loadingState.style.display = 'block';
+        // Animate transition to loading state
+        gsap.to(this.uploadSection, {
+            opacity: 0,
+            y: -30,
+            duration: 0.3,
+            onComplete: () => {
+                this.uploadSection.style.display = 'none';
+                this.loadingState.style.display = 'block';
+                gsap.fromTo(this.loadingState,
+                    { opacity: 0, y: 30 },
+                    { opacity: 1, y: 0, duration: 0.5 }
+                );
+            }
+        });
+        
         this.hideError();
         this.hideResults();
     }
@@ -207,23 +249,45 @@ class FloraApp {
         this.confidenceScore.textContent = data.confidence || '0';
         this.plantDescription.textContent = data.description || 'No description available.';
 
-        // Update confidence badge color based on score
-        const confidenceBadge = this.confidenceScore.parentElement;
-        if (data.confidence >= 80) {
-            confidenceBadge.className = 'badge bg-success me-2';
-        } else if (data.confidence >= 60) {
-            confidenceBadge.className = 'badge bg-warning me-2';
-        } else {
-            confidenceBadge.className = 'badge bg-secondary me-2';
+        // Animate confidence circle
+        const confidence = data.confidence || 0;
+        const circumference = 2 * Math.PI * 25; // radius = 25
+        const offset = circumference - (confidence / 100) * circumference;
+        
+        if (this.confidenceCircle) {
+            this.confidenceCircle.style.strokeDashoffset = offset;
         }
 
-        // Hide loading and show results
-        this.hideLoading();
-        this.resultsSection.style.display = 'block';
-        this.resultsSection.classList.add('fade-in');
+        // Hide loading and show results with animation
+        gsap.to(this.loadingState, {
+            opacity: 0,
+            y: -30,
+            duration: 0.3,
+            onComplete: () => {
+                this.loadingState.style.display = 'none';
+                this.resultsSection.style.display = 'block';
+                
+                // Animate results appearance
+                gsap.timeline()
+                    .fromTo(this.resultsSection,
+                        { opacity: 0, y: 50, scale: 0.9 },
+                        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.7)" }
+                    )
+                    .fromTo(this.plantName,
+                        { opacity: 0, x: -30 },
+                        { opacity: 1, x: 0, duration: 0.4 }, "-=0.3"
+                    )
+                    .fromTo(this.plantDescription,
+                        { opacity: 0, y: 20 },
+                        { opacity: 1, y: 0, duration: 0.4 }, "-=0.2"
+                    );
+            }
+        });
 
-        // Scroll to results
-        this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+        // Scroll to results smoothly
+        setTimeout(() => {
+            this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }, 300);
     }
 
     hideResults() {
@@ -233,7 +297,12 @@ class FloraApp {
     showError(message) {
         this.errorMessage.textContent = message;
         this.errorSection.style.display = 'block';
-        this.errorSection.classList.add('fade-in');
+        
+        // Animate error appearance
+        gsap.fromTo(this.errorSection,
+            { opacity: 0, scale: 0.9, y: 30 },
+            { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" }
+        );
         
         // Auto-hide error after 5 seconds
         setTimeout(() => {
@@ -250,14 +319,26 @@ class FloraApp {
         this.uploadForm.reset();
         this.imageInput.value = '';
         
-        // Hide all sections except upload
-        this.hideImagePreview();
-        this.hideResults();
-        this.hideError();
-        this.hideLoading();
+        // Animate reset
+        const timeline = gsap.timeline();
         
-        // Show upload section
-        this.uploadSection.style.display = 'block';
+        timeline
+            .to([this.resultsSection, this.errorSection, this.loadingState], {
+                opacity: 0,
+                y: 30,
+                duration: 0.3,
+                onComplete: () => {
+                    this.hideResults();
+                    this.hideError();
+                    this.hideLoading();
+                    this.hideImagePreview();
+                }
+            })
+            .set(this.uploadSection, { display: 'block' })
+            .fromTo(this.uploadSection,
+                { opacity: 0, y: -30 },
+                { opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" }
+            );
         
         // Reset button state
         this.validateForm();
@@ -266,25 +347,184 @@ class FloraApp {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    // 3D Background initialization
+    init3DBackground() {
+        if (!window.THREE) return; // Fallback if Three.js doesn't load
+        
+        try {
+            // Scene setup
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            this.renderer = new THREE.WebGLRenderer({ canvas: this.bgCanvas, alpha: true });
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.setClearColor(0x000000, 0);
+
+            // Create floating geometric shapes
+            this.createFloatingGeometry();
+            
+            // Position camera
+            this.camera.position.z = 5;
+            
+            // Start animation loop
+            this.animate3D();
+        } catch (error) {
+            console.log('3D background initialization failed, continuing without 3D effects');
+        }
+    }
+
+    createFloatingGeometry() {
+        const geometries = [
+            new THREE.TetrahedronGeometry(0.5),
+            new THREE.OctahedronGeometry(0.3),
+            new THREE.IcosahedronGeometry(0.4)
+        ];
+        
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x10b981, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+
+        for (let i = 0; i < 15; i++) {
+            const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            // Random positioning
+            mesh.position.x = (Math.random() - 0.5) * 20;
+            mesh.position.y = (Math.random() - 0.5) * 20;
+            mesh.position.z = (Math.random() - 0.5) * 10;
+            
+            // Random rotation speeds
+            mesh.rotationSpeed = {
+                x: (Math.random() - 0.5) * 0.02,
+                y: (Math.random() - 0.5) * 0.02,
+                z: (Math.random() - 0.5) * 0.02
+            };
+            
+            this.particles.push(mesh);
+            this.scene.add(mesh);
+        }
+    }
+
+    animate3D() {
+        if (!this.renderer) return;
+        
+        requestAnimationFrame(() => this.animate3D());
+        
+        // Rotate particles
+        this.particles.forEach(particle => {
+            particle.rotation.x += particle.rotationSpeed.x;
+            particle.rotation.y += particle.rotationSpeed.y;
+            particle.rotation.z += particle.rotationSpeed.z;
+            
+            // Gentle floating motion
+            particle.position.y += Math.sin(Date.now() * 0.001 + particle.position.x) * 0.001;
+        });
+        
+        this.renderer.render(this.scene, this.camera);
+    }
+
+    onWindowResize() {
+        if (!this.camera || !this.renderer) return;
+        
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // Animation utilities
+    initAnimations() {
+        // Stagger animation for floating particles
+        gsap.to('.particle', {
+            y: '20px',
+            duration: 2,
+            ease: 'power2.inOut',
+            stagger: 0.2,
+            repeat: -1,
+            yoyo: true
+        });
+
+        // Logo 3D rotation enhancement
+        gsap.to('.logo-3d', {
+            rotationY: 360,
+            duration: 10,
+            ease: 'none',
+            repeat: -1
+        });
+    }
+
+    setupScrollAnimations() {
+        // Smooth reveal animations on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    gsap.fromTo(entry.target,
+                        { opacity: 0, y: 50 },
+                        { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }
+                    );
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for scroll animations
+        document.querySelectorAll('.glass-card').forEach(card => {
+            observer.observe(card);
+        });
+    }
+
     // Utility method to show toast notifications
     showToast(message, type = 'info') {
-        // Create toast element
         const toast = document.createElement('div');
-        toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
-        toast.style.zIndex = '9999';
+        toast.className = `toast-notification toast-${type}`;
         toast.innerHTML = `
             <i class="fas fa-info-circle me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <span>${message}</span>
         `;
+        
+        // Add toast styles
+        Object.assign(toast.style, {
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '12px',
+            padding: '12px 20px',
+            color: 'white',
+            zIndex: '10000',
+            transform: 'translateX(100%)',
+            opacity: '0'
+        });
         
         document.body.appendChild(toast);
         
+        // Animate in
+        gsap.to(toast, {
+            x: 0,
+            opacity: 1,
+            duration: 0.5,
+            ease: 'back.out(1.7)'
+        });
+        
         // Auto remove after 3 seconds
         setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
-            }
+            gsap.to(toast, {
+                x: '100%',
+                opacity: 0,
+                duration: 0.3,
+                onComplete: () => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }
+            });
         }, 3000);
     }
 }
@@ -293,10 +533,26 @@ class FloraApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.floraApp = new FloraApp();
     
-    // Service worker registration for PWA capabilities (optional)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(console.error);
-    }
+    // Add smooth page load animation
+    gsap.fromTo('body', 
+        { opacity: 0 },
+        { opacity: 1, duration: 1, ease: 'power2.out' }
+    );
+    
+    // Staggered animation for hero content
+    gsap.timeline()
+        .fromTo('.logo-3d', 
+            { scale: 0, rotation: 180 },
+            { scale: 1, rotation: 0, duration: 1, ease: 'back.out(1.7)' }
+        )
+        .fromTo('.hero-title',
+            { y: 50, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.5'
+        )
+        .fromTo('.hero-subtitle',
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' }, '-=0.3'
+        );
     
     // Add keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -310,6 +566,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Escape to reset app
         if (e.key === 'Escape') {
             window.floraApp.resetApp();
+        }
+        
+        // Space to scroll to upload section
+        if (e.key === ' ' && e.target === document.body) {
+            e.preventDefault();
+            document.querySelector('#upload-section').scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+    
+    // Add touch gesture support for mobile
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    });
+    
+    document.addEventListener('touchend', (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchStartY - touchEndY;
+        
+        // Swipe up to go to upload section
+        if (diff > 50 && window.scrollY < 100) {
+            document.querySelector('#upload-section').scrollIntoView({ behavior: 'smooth' });
         }
     });
 });

@@ -90,7 +90,18 @@ Flora is a production-ready, mobile-first web application that allows users to i
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- **June 24, 2025**: Enhanced UI with modern mobile-first design
+  - Added 3D background effects using Three.js
+  - Implemented GSAP animations for smooth interactions
+  - Created glass-morphism cards with backdrop blur effects
+  - Added DNA helix loading animation
+  - Implemented animated confidence circle display
+  - Enhanced drag-and-drop with visual feedback
+  - Added touch gesture support for mobile devices
+  - Improved responsive design for all screen sizes
+
 ## Changelog
 
-Changelog:
-- June 24, 2025. Initial setup
+- June 24, 2025: Initial setup and modern UI enhancement

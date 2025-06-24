@@ -11,19 +11,44 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Three.js for 3D effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
     <!-- Custom styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+    
+    <!-- Floating particles -->
+    <div class="floating-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
     <div class="container-fluid">
         <!-- Header -->
-        <header class="text-center py-4">
+        <header class="hero-section text-center py-5">
             <div class="container">
-                <h1 class="display-4 mb-2">
-                    <i class="fas fa-leaf text-success me-2"></i>
-                    Flora
-                </h1>
-                <p class="lead text-muted">Identify plants instantly with AI</p>
+                <div class="hero-content">
+                    <div class="logo-container mb-4">
+                        <div class="logo-3d">
+                            <i class="fas fa-leaf text-success"></i>
+                        </div>
+                    </div>
+                    <h1 class="hero-title display-3 mb-3">Flora</h1>
+                    <p class="hero-subtitle lead mb-4">Discover the world of plants with AI-powered identification</p>
+                    <div class="scroll-indicator">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -32,48 +57,68 @@
             <!-- Upload Section -->
             <div id="upload-section" class="row justify-content-center">
                 <div class="col-lg-8 col-xl-6">
-                    <div class="card border-0 shadow-sm">
+                    <div class="glass-card upload-card">
                         <div class="card-body p-4">
                             <!-- Image Preview Area -->
-                            <div id="image-preview-container" class="text-center mb-4" style="display: none;">
-                                <img id="image-preview" class="img-fluid rounded shadow-sm" style="max-height: 300px;" alt="Plant preview">
+                            <div id="image-preview-container" class="preview-container text-center mb-4" style="display: none;">
+                                <div class="image-frame">
+                                    <img id="image-preview" class="preview-image" alt="Plant preview">
+                                    <div class="image-overlay">
+                                        <div class="scanning-line"></div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Upload Form -->
                             <form id="upload-form" enctype="multipart/form-data">
-                                <div class="mb-4">
-                                    <label for="image-input" class="form-label">
-                                        <i class="fas fa-camera me-2"></i>
-                                        Choose or capture a plant image
-                                    </label>
-                                    <input type="file" 
-                                           class="form-control form-control-lg" 
-                                           id="image-input" 
-                                           name="image" 
-                                           accept="image/*" 
-                                           capture="environment">
-                                    <div class="form-text">
-                                        Supported formats: PNG, JPG, JPEG, GIF, WEBP (max 16MB)
+                                <div class="upload-zone mb-4" id="upload-zone">
+                                    <div class="upload-content">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-camera"></i>
+                                        </div>
+                                        <h4 class="upload-title">Upload Plant Image</h4>
+                                        <p class="upload-subtitle">Drag & drop or click to select</p>
+                                        <input type="file" 
+                                               class="form-control visually-hidden" 
+                                               id="image-input" 
+                                               name="image" 
+                                               accept="image/*" 
+                                               capture="environment">
+                                        <div class="upload-formats">
+                                            <small class="text-muted">PNG, JPG, JPEG, GIF, WEBP (max 16MB)</small>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="d-grid gap-2">
                                     <button type="submit" 
                                             id="identify-btn" 
-                                            class="btn btn-success btn-lg" 
+                                            class="btn-modern btn-identify" 
                                             disabled>
-                                        <i class="fas fa-search me-2"></i>
-                                        Identify Plant
+                                        <span class="btn-text">
+                                            <i class="fas fa-magic me-2"></i>
+                                            Identify Plant
+                                        </span>
+                                        <div class="btn-ripple"></div>
                                     </button>
                                 </div>
                             </form>
 
                             <!-- Loading State -->
-                            <div id="loading-state" class="text-center py-4" style="display: none;">
-                                <div class="spinner-border text-success mb-3" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                            <div id="loading-state" class="loading-container text-center py-4" style="display: none;">
+                                <div class="dna-spinner">
+                                    <div class="dna-helix">
+                                        <div class="strand strand-1"></div>
+                                        <div class="strand strand-2"></div>
+                                    </div>
                                 </div>
-                                <p class="text-muted">Analyzing your plant image...</p>
+                                <h4 class="loading-title mt-4">Analyzing Plant</h4>
+                                <p class="loading-subtitle">Our AI is examining the botanical features...</p>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -83,43 +128,52 @@
             <!-- Results Section -->
             <div id="results-section" class="row justify-content-center mt-4" style="display: none;">
                 <div class="col-lg-8 col-xl-6">
-                    <div class="card border-0 shadow-sm">
+                    <div class="glass-card results-card">
                         <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h3 class="card-title mb-0">
-                                    <i class="fas fa-seedling text-success me-2"></i>
-                                    Identification Results
-                                </h3>
-                                <button id="new-scan-btn" class="btn btn-outline-secondary btn-sm">
-                                    <i class="fas fa-camera me-1"></i>
-                                    New Scan
+                            <div class="results-header mb-4">
+                                <div class="result-icon">
+                                    <i class="fas fa-seedling"></i>
+                                </div>
+                                <h3 class="results-title">Plant Identified!</h3>
+                                <button id="new-scan-btn" class="btn-float">
+                                    <i class="fas fa-camera"></i>
                                 </button>
                             </div>
 
                             <!-- Plant Name and Confidence -->
-                            <div class="mb-4">
-                                <h4 id="plant-name" class="text-success mb-2"></h4>
-                                <div class="d-flex align-items-center">
-                                    <span class="badge bg-success me-2">
-                                        <i class="fas fa-check-circle me-1"></i>
-                                        <span id="confidence-score"></span>% Confidence
-                                    </span>
+                            <div class="plant-info mb-4">
+                                <h2 id="plant-name" class="plant-name-title"></h2>
+                                <div class="confidence-display">
+                                    <div class="confidence-circle">
+                                        <svg class="confidence-svg" width="60" height="60">
+                                            <circle class="confidence-bg" cx="30" cy="30" r="25"></circle>
+                                            <circle class="confidence-fill" cx="30" cy="30" r="25" id="confidence-circle"></circle>
+                                        </svg>
+                                        <div class="confidence-text">
+                                            <span id="confidence-score">0</span>%
+                                        </div>
+                                    </div>
+                                    <span class="confidence-label">Confidence</span>
                                 </div>
                             </div>
 
                             <!-- Plant Description -->
-                            <div class="mb-3">
-                                <h5 class="mb-2">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    Description
-                                </h5>
-                                <p id="plant-description" class="text-muted lh-base"></p>
+                            <div class="description-section">
+                                <div class="section-header">
+                                    <h5 class="section-title">
+                                        <i class="fas fa-book-open me-2"></i>
+                                        About This Plant
+                                    </h5>
+                                </div>
+                                <div class="description-content">
+                                    <p id="plant-description" class="description-text"></p>
+                                </div>
                             </div>
 
-                            <!-- Wikipedia Attribution -->
-                            <div class="text-muted small">
-                                <i class="fab fa-wikipedia-w me-1"></i>
-                                Description sourced from Wikipedia
+                            <!-- Source Attribution -->
+                            <div class="source-attribution">
+                                <i class="fab fa-wikipedia-w me-2"></i>
+                                <span>Information from Wikipedia</span>
                             </div>
                         </div>
                     </div>
@@ -129,9 +183,18 @@
             <!-- Error Section -->
             <div id="error-section" class="row justify-content-center mt-4" style="display: none;">
                 <div class="col-lg-8 col-xl-6">
-                    <div class="alert alert-danger" role="alert">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Error:</strong> <span id="error-message"></span>
+                    <div class="error-card glass-card">
+                        <div class="error-content">
+                            <div class="error-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h4 class="error-title">Oops! Something went wrong</h4>
+                            <p class="error-message" id="error-message"></p>
+                            <button class="btn-modern btn-retry" onclick="window.floraApp.resetApp()">
+                                <i class="fas fa-redo me-2"></i>
+                                Try Again
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
