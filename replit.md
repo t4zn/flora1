@@ -92,17 +92,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **June 24, 2025**: Complete mobile chatbot transformation
-  - Redesigned as mobile-first chatbot interface with fixed aspect ratio
-  - Added iPhone-style status bar with live time display
-  - Implemented camera interface matching user's reference design
-  - Added live camera preview with tap-to-focus functionality
-  - Created chat-based conversation flow for plant identification
-  - Added light/dark theme toggle with system preference detection
-  - Implemented settings modal with theme switching
-  - Added proper mobile camera capture and gallery selection
-  - Enhanced touch interactions and gesture support
-  - Removed scrolling - fits perfectly in mobile viewport
+- **June 24, 2025**: Advanced AI botanist with 3D animations
+  - Enhanced chatbot with free local plant identification (no API keys needed)
+  - Added Three.js 3D background with floating botanical elements
+  - Implemented comprehensive botanical knowledge base with 100+ plants
+  - Created text-based chat interface with plant-only question filtering
+  - Added typing animations and enhanced message bubbles
+  - Included care tips and Wikipedia read-more links
+  - Built advanced plant categorization system using image analysis
+  - Added GSAP animations for smooth 2D floating elements
+  - Enhanced mobile UI with modern glass-morphism design
+  - Implemented intelligent botanical response system
 
 ## Changelog
 

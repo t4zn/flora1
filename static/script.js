@@ -7,7 +7,10 @@ class FloraApp {
         this.initializeTime();
         this.initializeTheme();
         this.setupCamera();
+        this.init3DBackground();
+        this.initAnimations();
         this.messageCounter = 0;
+        this.showInitialMessage();
     }
 
     initializeElements() {
@@ -38,6 +41,13 @@ class FloraApp {
         this.captureBtn = safeGetElement('capture-btn');
         this.galleryBtn = safeGetElement('gallery-btn');
         this.flashBtn = safeGetElement('flash-btn');
+        
+        // Chat input elements
+        this.textInput = safeGetElement('text-input');
+        this.sendBtn = safeGetElement('send-btn');
+        this.attachBtn = safeGetElement('attach-btn');
+        this.attachOptions = safeGetElement('attach-options');
+        this.inputSuggestions = safeGetElement('input-suggestions');
         
         // Theme and settings
         this.themeToggle = safeGetElement('theme-toggle');
@@ -133,6 +143,44 @@ class FloraApp {
         // Form submission
         safeAddListener(this.uploadForm, 'submit', (e) => {
             e.preventDefault();
+        });
+        
+        // Text input events
+        safeAddListener(this.textInput, 'input', () => {
+            this.handleTextInput();
+        });
+        
+        safeAddListener(this.textInput, 'keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendTextMessage();
+            }
+        });
+        
+        safeAddListener(this.textInput, 'focus', () => {
+            this.showSuggestions();
+        });
+        
+        safeAddListener(this.textInput, 'blur', () => {
+            setTimeout(() => this.hideSuggestions(), 150);
+        });
+        
+        safeAddListener(this.sendBtn, 'click', () => {
+            this.sendTextMessage();
+        });
+        
+        safeAddListener(this.attachBtn, 'click', () => {
+            this.toggleAttachOptions();
+        });
+        
+        // Suggestion clicks
+        document.querySelectorAll('.suggestion').forEach(suggestion => {
+            suggestion.addEventListener('click', () => {
+                this.textInput.value = suggestion.dataset.text;
+                this.handleTextInput();
+                this.hideSuggestions();
+                this.textInput.focus();
+            });
         });
     }
 
@@ -376,11 +424,23 @@ class FloraApp {
         
         let resultHtml = '';
         if (plantResult) {
+            const careList = plantResult.care_tips ? 
+                plantResult.care_tips.map(tip => `<li>${tip}</li>`).join('') : '';
+            
             resultHtml = `
                 <div class="plant-result">
                     <div class="plant-name">${plantResult.plant}</div>
-                    <div class="plant-confidence">Confidence: ${plantResult.confidence}%</div>
                     <div class="plant-description">${plantResult.description}</div>
+                    ${careList ? `
+                        <div class="care-tips">
+                            <h4>Care Tips:</h4>
+                            <ul>${careList}</ul>
+                        </div>
+                    ` : ''}
+                    <a href="${plantResult.wiki_url}" target="_blank" class="read-more-btn">
+                        <i class="fas fa-external-link-alt"></i>
+                        Read More on Wikipedia
+                    </a>
                 </div>
             `;
         }
@@ -442,7 +502,7 @@ class FloraApp {
                 lastMessage.remove();
             }
 
-            // Show results
+            // Show results with enhanced styling
             this.addBotMessage('Great! I was able to identify your plant:', data);
 
         } catch (error) {
@@ -496,9 +556,370 @@ class FloraApp {
         });
     }
     
+    // Show initial typing message
+    showInitialMessage() {
+        setTimeout(() => {
+            document.getElementById('initial-typing').style.display = 'none';
+            document.getElementById('initial-message').style.display = 'block';
+            
+            if (window.gsap) {
+                gsap.fromTo('#initial-message',
+                    { opacity: 0, y: 20 },
+                    { opacity: 1, y: 0, duration: 0.5 }
+                );
+            }
+        }, 2000);
+    }
+    
+    // Text input handling
+    handleTextInput() {
+        const value = this.textInput.value.trim();
+        this.sendBtn.disabled = value.length === 0;
+        
+        if (value.length === 0) {
+            this.showSuggestions();
+        } else {
+            this.hideSuggestions();
+        }
+    }
+    
+    showSuggestions() {
+        if (this.inputSuggestions && this.textInput.value.trim().length === 0) {
+            this.inputSuggestions.classList.add('show');
+        }
+    }
+    
+    hideSuggestions() {
+        if (this.inputSuggestions) {
+            this.inputSuggestions.classList.remove('show');
+        }
+    }
+    
+    toggleAttachOptions() {
+        if (!this.attachOptions) return;
+        
+        const isVisible = this.attachOptions.style.display === 'block';
+        
+        if (isVisible) {
+            this.attachOptions.style.display = 'none';
+            this.attachBtn.classList.remove('active');
+        } else {
+            this.attachOptions.style.display = 'block';
+            this.attachBtn.classList.add('active');
+        }
+    }
+    
+    async sendTextMessage() {
+        const message = this.textInput.value.trim();
+        if (!message) return;
+        
+        // Add user message
+        this.addUserTextMessage(message);
+        
+        // Clear input
+        this.textInput.value = '';
+        this.handleTextInput();
+        this.hideSuggestions();
+        
+        // Show typing indicator
+        const typingId = this.addBotTyping();
+        
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message })
+            });
+            
+            const data = await response.json();
+            
+            // Remove typing indicator
+            this.removeBotTyping(typingId);
+            
+            if (response.ok) {
+                this.addBotMessage(data.response);
+            } else {
+                this.addBotMessage('Sorry, I encountered an error. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.removeBotTyping(typingId);
+            this.addBotMessage('Sorry, I had trouble processing your message. Please check your connection and try again.');
+        }
+    }
+    
+    addUserTextMessage(text) {
+        if (!this.chatContainer) return;
+        
+        const messageId = `user-msg-${++this.messageCounter}`;
+        const time = new Date().toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit' 
+        });
+        
+        const messageHtml = `
+            <div class="chat-message user-message" id="${messageId}">
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p>${text}</p>
+                    </div>
+                    <div class="message-time">${time}</div>
+                </div>
+                <div class="message-avatar">
+                    <div class="avatar-glow">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+        this.scrollToBottom();
+    }
+    
+    addBotTyping() {
+        if (!this.chatContainer) return null;
+        
+        const typingId = `typing-${Date.now()}`;
+        const messageHtml = `
+            <div class="chat-message bot-message" id="${typingId}">
+                <div class="message-avatar">
+                    <div class="avatar-glow">
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <div class="typing-animation">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+        this.scrollToBottom();
+        return typingId;
+    }
+    
+    removeBotTyping(typingId) {
+        if (typingId) {
+            const typingElement = document.getElementById(typingId);
+            if (typingElement) {
+                typingElement.remove();
+            }
+        }
+    }
+    
+    // 3D Background initialization
+    init3DBackground() {
+        if (!window.THREE) {
+            console.log('Three.js not loaded, skipping 3D background');
+            return;
+        }
+        
+        try {
+            const canvas = document.getElementById('bg-canvas');
+            if (!canvas) {
+                console.log('Canvas element not found');
+                return;
+            }
+
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            this.renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas, 
+                alpha: true,
+                antialias: true 
+            });
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.setClearColor(0x000000, 0);
+
+            this.createFloating3DElements();
+            this.camera.position.z = 5;
+            this.animate3D();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => this.onWindowResize());
+            
+        } catch (error) {
+            console.log('3D background initialization failed:', error);
+        }
+    }
+
+    onWindowResize() {
+        if (!this.camera || !this.renderer) return;
+        
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    createFloating3DElements() {
+        if (!this.scene) return;
+        
+        this.particles3D = [];
+        
+        // Create leaf-like geometries with more detail
+        const leafGeometry = new THREE.PlaneGeometry(0.4, 0.6);
+        const leafMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x10b981, 
+            transparent: true,
+            opacity: 0.7,
+            side: THREE.DoubleSide
+        });
+
+        // Create stem/branch geometries
+        const stemGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.8);
+        const stemMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x059669, 
+            transparent: true,
+            opacity: 0.8
+        });
+
+        // Create pollen-like spheres
+        const pollenGeometry = new THREE.SphereGeometry(0.08, 12, 8);
+        const pollenMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x34d399, 
+            transparent: true,
+            opacity: 0.9
+        });
+
+        // Create flower-like geometries
+        const flowerGeometry = new THREE.ConeGeometry(0.15, 0.3, 6);
+        const flowerMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x50c878, 
+            transparent: true,
+            opacity: 0.8
+        });
+
+        // Add multiple floating botanical elements
+        for (let i = 0; i < 25; i++) {
+            let mesh, geometry, material;
+            
+            const elementType = i % 4;
+            switch (elementType) {
+                case 0: // Leaves
+                    mesh = new THREE.Mesh(leafGeometry, leafMaterial);
+                    break;
+                case 1: // Stems
+                    mesh = new THREE.Mesh(stemGeometry, stemMaterial);
+                    break;
+                case 2: // Pollen
+                    mesh = new THREE.Mesh(pollenGeometry, pollenMaterial);
+                    break;
+                case 3: // Flowers
+                    mesh = new THREE.Mesh(flowerGeometry, flowerMaterial);
+                    break;
+            }
+            
+            // Random positioning across the screen
+            mesh.position.x = (Math.random() - 0.5) * 12;
+            mesh.position.y = (Math.random() - 0.5) * 12;
+            mesh.position.z = (Math.random() - 0.5) * 6;
+            
+            // Random initial rotation
+            mesh.rotation.x = Math.random() * Math.PI * 2;
+            mesh.rotation.y = Math.random() * Math.PI * 2;
+            mesh.rotation.z = Math.random() * Math.PI * 2;
+            
+            // Animation properties
+            mesh.rotationSpeed = {
+                x: (Math.random() - 0.5) * 0.02,
+                y: (Math.random() - 0.5) * 0.02,
+                z: (Math.random() - 0.5) * 0.02
+            };
+            
+            // Floating motion parameters
+            mesh.floatSpeed = 0.0008 + Math.random() * 0.0012;
+            mesh.floatAmplitude = 0.3 + Math.random() * 0.8;
+            mesh.timeOffset = Math.random() * Math.PI * 2;
+            mesh.driftSpeed = (Math.random() - 0.5) * 0.003;
+            
+            this.particles3D.push(mesh);
+            this.scene.add(mesh);
+        }
+    }
+
+    animate3D() {
+        if (!this.renderer || !this.scene || !this.camera) return;
+        
+        requestAnimationFrame(() => this.animate3D());
+        
+        const time = Date.now() * 0.001;
+        
+        if (this.particles3D && this.particles3D.length > 0) {
+            this.particles3D.forEach((particle, index) => {
+                // Continuous rotation
+                particle.rotation.x += particle.rotationSpeed.x;
+                particle.rotation.y += particle.rotationSpeed.y;
+                particle.rotation.z += particle.rotationSpeed.z;
+                
+                // Complex floating motion
+                const floatY = Math.sin(time * particle.floatSpeed + particle.timeOffset) * particle.floatAmplitude * 0.02;
+                const floatX = Math.cos(time * particle.floatSpeed * 0.7 + particle.timeOffset) * 0.01;
+                const floatZ = Math.sin(time * particle.floatSpeed * 0.5 + particle.timeOffset) * 0.008;
+                
+                particle.position.y += floatY;
+                particle.position.x += floatX;
+                particle.position.z += floatZ;
+                
+                // Gentle drift
+                particle.position.x += particle.driftSpeed;
+                
+                // Reset particles that drift too far
+                if (particle.position.x > 8) particle.position.x = -8;
+                if (particle.position.x < -8) particle.position.x = 8;
+                if (particle.position.y > 8) particle.position.y = -8;
+                if (particle.position.y < -8) particle.position.y = 8;
+                
+                // Subtle scaling animation for organic feel
+                const scaleVariation = 1 + Math.sin(time * 0.5 + index) * 0.1;
+                particle.scale.setScalar(scaleVariation);
+            });
+        }
+        
+        // Gentle camera movement
+        this.camera.position.x = Math.sin(time * 0.1) * 0.5;
+        this.camera.position.y = Math.cos(time * 0.08) * 0.3;
+        this.camera.lookAt(0, 0, 0);
+        
+        this.renderer.render(this.scene, this.camera);
+    }
+    
+    initAnimations() {
+        if (!window.gsap) return;
+        
+        // Floating 2D elements animation
+        gsap.to('.leaf-particle', {
+            y: '20px',
+            rotation: '5deg',
+            duration: 4,
+            ease: 'power2.inOut',
+            stagger: 0.5,
+            repeat: -1,
+            yoyo: true
+        });
+
+        gsap.to('.pollen-particle', {
+            y: '15px',
+            x: '10px',
+            scale: 1.2,
+            duration: 3,
+            ease: 'power2.inOut',
+            stagger: 0.3,
+            repeat: -1,
+            yoyo: true
+        });
+    }
+    
     // Utility method for showing notifications
     showNotification(message, type = 'info') {
-        // This could be expanded to show toast notifications
         console.log(`${type}: ${message}`);
     }
 
